@@ -40,24 +40,25 @@ Cuando la luz ambiental incide en la burbuja, una parte de la onda se refleja en
 Debido a la gravedad y a la evaporación, el líquido de la burbuja fluye hacia abajo esto hace que la parte superior de la burbuja se vuelva cada vez más delgada y disminuye $t$ de modo que la parte inferior resulta ser más gruesa. Al cambiar $t$ en la ecuación, la longitud de onda $\lambda$ que experimenta interferencia constructiva cambia, provocando el corrimiento de colores a lo largo de la superficie.
 
 
-Con base en la observación anterior, obtenemos datos de esta forma, es decir, la información del espesor se analiza por pixel, lo cual corresponde a valores de aristas. Véase el siguiente ejemplo de una submatriz en una región aleatoria de la imagen, donde a cada valor de pixel se le ha asignado un valor de espesor correspondiente al valor real de la burbuja.
+Con base en la observación anterior, obtenemos una matriz de datos. El planteamiento fundamental consiste en utilizar la información del espesor extraída y analizada en cada pixel como la variable para definir los pesos correspondientes a los enlaces o aristas de nuestra red. Véase el siguiente ejemplo de una submatriz en una región aleatoria de la imagen, donde a cada pixel se le ha asignado un respectivo valor de espesor equivalente al grosor real de la burbuja en esa coordenada \ref{Ejemplo_submatriz}.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{Submatriz de ejemplo.png}
-    \caption{Ejemplo visual de que a cada subcuadrante definido en la imagen le corresponde un correspondiente de espesor}
+    \caption{Ejemplo visual donde a cada cuadrante (pixel) en la imagen le corresponde un valor continuo de espesor.}
     \label{Ejemplo_submatriz}
 \end{figure}
 
-Sobre estos datos defínanse los siguientes nodos. A modo de visualización se presenta la siguiente imagen.
+Para modelar las trayectorias de la luz sobre este entramado, establecemos que los nodos de nuestra red no se sitúan en el interior de los píxeles, sino que se definen geométricamente justo en las esquinas de dichos píxeles. Por esta razón, como notaremos en la figura \ref{Nodos-Ejemplo}, los nodos se aprecian en las intersecciones y cruces en lugar de ubicarse en los centros, permitiendo que la información interna contenida en las facetas de los píxeles contiguos dote a las aristas de su peso estructural o costo de cruce.
+
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{Submatriz-nodos.jpg}
-    \caption{Nodos Definidos}
+    \caption{Visualización de los nodos delimitados específicamente en las esquinas de un pixel bajo la retícula.}
     \label{Nodos-Ejemplo}
 \end{figure}
 
-Donde notamos que en la subgráfica $(abcd)$, cada nodo tiene grado 3, pero en la gráfica completa tendría 8 vecinos en los que se incluiría al antecesor y su sucesor. Para un medio como el de la burbuja, podemos descartar que el sucesor sea el antecesor por la naturaleza del medio que vamos a analizar.
+Cabe aclarar que la subgráfica esquemática acotada por los nodos $(a,b,c,d)$ funge únicamente como un caso de exposición ilustrativa aislado para un solo elemento de retícula. Al consolidar la gráfica completa para evaluar todo el problema, este proceso se replica bidimensionalmente: en cada esquina de cada pixel se define sistemáticamente un nodo, por lo que todo pixel de la matriz aporta métricas espaciales y cada esquina en toda la imagen operará como un nodo interconector. De este modo generalizado, un nodo interno poseerá naturalmente una conectividad global de 8 vecinos adyacentes (esparcidos ortogonal y transversalmente). Durante el trayecto de un rayo, de entre estas 8 opciones posibles normalmente se contemplaría e incluiría conceptualmente al nodo antecesor inmediato; sin embargo, en el medio de la burbuja de jabón descrita y que nos atañe analizar, descartaremos fácticamente que pueda haber una retrorreflexión tan abrupta (que obligase a que el nodo sucesor sea su mismo antecesor de procedencia) dada la naturaleza refractiva continua del material.
 
 \begin{proof}[Demostración de la ausencia de retrorreflexión en la red]
 

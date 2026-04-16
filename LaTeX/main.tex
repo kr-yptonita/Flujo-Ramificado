@@ -12,6 +12,15 @@
 \usepackage{verbatim}
 \usepackage{xcolor}
 
+\graphicspath{
+    {Capitulo_1/Imagenes/}
+    {Capitulo_2/Imagenes/}
+    {Capitulo_3/Imagenes/}
+    {Capitulo_4/Imagenes/}
+    {Capitulo_5/Imagenes/}
+}
+
+
 
 % Establecer fondo negro
 %\pagecolor{black}
@@ -38,11 +47,11 @@
 \tableofcontents
 \newpage
 
-\include{capitulo1}
-\include{capitulo2}
-\include{capitulo3}
-\include{capitulo4}
-\include{capitulo5}
+\include{Capitulo_1/capitulo1}
+\include{Capitulo_2/capitulo2}
+\include{Capitulo_3/capitulo3}
+\include{Capitulo_4/capitulo4}
+\include{Capitulo_5/capitulo5}
 
 \renewcommand{\bibname}{Referencias}
 \bibliographystyle{plain}

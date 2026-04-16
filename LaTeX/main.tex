@@ -1,0 +1,52 @@
+\documentclass[12pt,letterpaper]{book}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{verbatim}
+\usepackage{xcolor}
+
+
+% Establecer fondo negro
+%\pagecolor{black}
+% Establecer color de texto blanco
+%\color{white}
+
+\geometry{margin=1.5cm}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Large \MakeUppercase{UNAM}} \\
+    \vspace{2cm}
+    {\Large Proyecto 2}\\
+    \vspace{1cm}
+    {\Large Análisis en perspectiva de redes en el comportamiento del flujo ramificado de la luz en medios de densidad variable}\\
+    \vspace{2cm}
+    {\large Karla Romina Juárez Torres}\\
+    \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\include{capitulo1}
+\include{capitulo2}
+\include{capitulo3}
+\include{capitulo4}
+\include{capitulo5}
+
+\renewcommand{\bibname}{Referencias}
+\bibliographystyle{plain}
+\bibliography{referencias}
+\include{Anotaciones}
+
+\end{document}

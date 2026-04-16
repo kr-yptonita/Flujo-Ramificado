@@ -1,0 +1,80 @@
+\chapter{Metodología}
+El propósito es usar métodos de simulación numérica para analizar datos que puedan ser obtenidos que en este caso es primordial definir como se implementarán.
+
+\section{Sistema de Boyaje}
+
+Este sistema lo refiero así por que su labor será que tengamos nodos en nuestra información que nos indicarán puntos anclados que marcarán el simíl a nuestros nodos de bifurcación, este sistema no necesariamente se necesita como un medio fisico y podemos usar el hecho de que la interferencia de la luz provoca una gama de colores relacionable con la densidad de esa zona del medio, el ejemplo más notable lo notamos en una brubuja de jabón y agua, como puede verse en la imagen:
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Burbuja_ejemplo.png}
+    \caption{Burbuja de ejemplo}
+    \label{Burbuja_ejemplo}
+\end{figure}
+
+No se busca que los datos que se estudien sean de una burbuja común si no de un medio bastante controlado con una pelicula de jabón y tentativamente se cambiaria a algún otro material, además de  un fondo limpio y de color blanco, y se grabarán bajo una luz artificial blanca, en formato de video a 60 imagenes por segundo o superior en una resolución de 8 mega pixeles, esto con el fin de tener la menor cantidad de ruido en el posterior sistema de boyaje que se creará.
+
+
+Principalmente los datos que se buscan obtener son una matriz de colores relacionada a la imagen de la burbuja, a este fenómeno le conocemos como interferencia de película delgada, 
+
+
+Volviendo a la imagen \ref{Burbuja_ejemplo} el cambio de color observado se debe principalmente a variaciones en el espesor de la película, más que a cambios en la densidad en sí. Sin embargo, la densidad del medio se relaciona de manera directa con el índice de refracción.
+
+La ecuación que relaciona el color visible con el espesor y las propiedades del medio es la condición para la interferencia constructiva:
+
+\begin{equation}
+2nt\cos(\theta_t) = \left(m + \frac{1}{2}\right)\lambda
+\end{equation}
+
+Donde:
+\begin{itemize}
+    \item $n$: Índice de refracción de la solución jabonosa que típicamente se encuentra alrededor de 1.33, pero posteriormente se realizará una muestra base y apartir de allí se dictaminará este valor.
+    \item $t$: Espesor de la pared de la burbuja en ese punto específico, esto nos permitirá obtener a nuestras aristas.
+    \item $\theta_t$: Ángulo de refracción de la luz dentro de la película de jabón.
+    \item $m$: Un número entero ($0, 1, 2, \dots$) que representa el orden de la interferencia.
+    \item $\lambda$: Longitud de onda del color observado (por ejemplo, 650 nm para el rojo o 450 nm para el azul).
+\end{itemize}
+
+Cuando la luz ambiental incide en la burbuja, una parte de la onda se refleja en la superficie exterior y otra atraviesa la primera capa, viajando por el medio fluido hasta reflejarse en la pared interior. Al salir, ambas ondas de luz se superponen que serán detectadas en los microsensores de la camara.
+
+Debido a la gravedad y a la evaporación, el líquido de la burbuja fluye hacia abajo esto hace que la parte superior de la burbuja se vuelva cada vez más delgada y disminuye $t$ de modo que la parte inferior resulta ser más gruesa. Al cambiar $t$ en la ecuación, la longitud de onda $\lambda$ que experimenta interferencia constructiva cambia, provocando el corrimiento de colores a lo largo de la superficie.
+
+
+El motivo de esto es que si observamos obtendriamos datos de esta forma revisando la información convertida a espesor por pixel y esto seria correspondiente a valores de aristas veasé el siguiente ejemplo de una submatriz en alguna región aleatorio de la imagen y donde a cada valor de pixel se le a asignado un valor de espesor correspondiente al valor real de la burbuja.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Submatriz de ejemplo.png}
+    \caption{Ejemplo visual de que a cada subcuadrante definido en la imagen le corresponde un correspondiente de espesor}
+    \label{Ejemplo_submatriz}
+\end{figure}
+
+Sobre estos datos definasé los siguientes nodos a modo de visualizar está la siguiente imagen,
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Submatriz-nodos.jpg}
+    \caption{Nodos Definidos}
+    \label{Nodos-Ejemplo}
+\end{figure}
+
+donde notemos que a la subgráfica $(abcd)$ tiene cada nodo tiene grado 3 pero en la grafica completa tendria 8 vecinos en los que se incluiria al antecesor en y su sucesor, para un medio como el de la burbuja podemos descartar que el sucesor sea el antecesor por la naturaleza del medio que vamos a analizar.  
+
+\begin{proof}[Demostración pendiente (no reflexión en medios transparentes usando nodos y aristas)]
+    
+\end{proof}
+
+Por lo mismo en caso de que se encuentra un dato que indique reflexión total se asume que será por la cuestión de pixeles muertos o ruido en la imagen y se completará la información calculando según la media de la información de los vecinos para tener una gráfica completa.
+
+Asi podemos definir a los arcos quedarian como no dirigidos, entre cada nodo con cada uno de sus vecinos, y en el ejemplo el arco de $(a,d)$ y el arco $(b,c)$ tendrian un peso igual, y por otro lado el arco $(a,b)$ tomaria de valor a la media entre $T_{i,j+1}$ y $T_{i+1,j+1}$, concretamente se espera que en su mayoria los rayos irán en su mayoria una trayectoria practicamente recta, pero algunos cuantos obtendrán una desviación que será gradual en algún nodo.
+
+El punto es que tengamos una red suficientemente densa en sus nodos de referencias o boyas, como para tener una información suficientemente congruente a la realidad del fenomeno que se observa.
+
+
+Finalmente se analizarán las siguientes propiedades:
+\begin{itemize}
+    \item Distribución de grado de los nodos de bifurcación
+    \item Robustez del flujo ante cambios en la varianza de la densidad del medio
+    \item Identificación de caminos críticos o puentes en la red de luz
+\end{itemize}
+
+

@@ -59,15 +59,36 @@ Sobre estos datos defínanse los siguientes nodos. A modo de visualización se p
 
 Donde notamos que en la subgráfica $(abcd)$, cada nodo tiene grado 3, pero en la gráfica completa tendría 8 vecinos en los que se incluiría al antecesor y su sucesor. Para un medio como el de la burbuja, podemos descartar que el sucesor sea el antecesor por la naturaleza del medio que vamos a analizar.
 
-\begin{proof}[Demostración pendiente (no reflexión en medios transparentes usando nodos y aristas)]
+\begin{proof}[Demostración de la ausencia de retrorreflexión en la red]
+
+    Consideremos la trayectoria de un rayo de luz modelada como un camino definido por una secuencia de nodos $P = (v_0, v_1, \dots, v_k)$ en nuestra red. Supongamos, por contradicción, que para un nodo intermedio $v_i$, su sucesor es el mismo nodo de donde provino, es decir, $v_{i+1} = v_{i-1}$. Para que la transición por las aristas $(v_{i-1}, v_i)$ y $(v_i, v_{i+1})$ sea válida y consecutiva de esta forma, el rayo debería experimentar un cambio de dirección de $180^\circ$ exactamente en el nodo $v_i$.
     
+    Sin embargo, por la naturaleza física del medio continuo transparente que estamos modelando para este caso,a posterior manejaremos a los obstáculos de una forma distinta, las perturbaciones en la densidad y el índice de refracción efectivo son paulatinas. Según la óptica de rayos en medios continuos con gradientes suaves de refracción, la curvatura y desviación del momento de la luz cambian el ángulo de propagación en cantidades pequeñas $\delta \theta$. Un retorno abrupto requeriría chocar contra una barrera opaca o un salto discontinuo gigantesco del índice de refracción, lo cual no existe en el fluido en reposo. Por ende, es físicamente imposible que un rayo se refleje sobre su misma trayectoria hacia el nodo anterior, demostrando formalmente que en nuestra topología de red se cumple siempre que $v_{i+1} \neq v_{i-1}$.
+
 \end{proof}
 
 Por lo mismo en caso de que se encuentra un dato que indique reflexión total se asume que será por la cuestión de pixeles muertos o ruido en la imagen y se completará la información calculando según la media de la información de los vecinos para tener una gráfica completa.
 
 Así podemos definir los arcos, los cuales quedarían sin dirección entre cada nodo con cada uno de sus vecinos. En el ejemplo, el arco de $(a,d)$ y el arco $(b,c)$ tendrían un peso igual, y por otro lado el arco $(a,b)$ tomaría como valor la media entre $T_{i,j+1}$ y $T_{i+1,j+1}$; concretamente se espera que en su mayoría los rayos sigan una trayectoria prácticamente recta, pero algunos cuantos obtendrán una desviación que será gradual en algún nodo.
 
-El punto es que tengamos una red suficientemente densa en sus nodos de referencias o boyas, como para tener una información suficientemente congruente a la realidad del fenomeno que se observa.
+\begin{proof}[Demostración de igualdad de pesos en arcos simétricos]
+    En el primer caso propuesto, afirmamos trivialmente que el arco $(a,d)$ y el arco $(b,c)$ tendrían un peso igual. Conviene recordar que el espesor de la película de jabón varía de manera preponderante en el eje vertical debido, como ya se mencionó, a los efectos de la gravedad que drenan el fluido hacia la base. Esto dota al fenómeno de una simetría traslacional local horizontal; en un mismo nivel de altura o renglón, los valores de espesor son prácticamente uniformes. Por lo tanto, si la luz transita por vías homólogas (los trayectos a una misma altitud o desplazamientos idénticos entre nodos), los cambios en la densidad son equiparables. La invariancia horizontal dictamina entonces que los costos o transiciones de dichos arcos experimentarán el mismo comportamiento constante, logrando así $w(a,d) = w(b,c)$.
+\end{proof}
+
+\begin{proof}[Demostración de la asignación del peso del arco mediante el Teorema del Valor Medio]
+    Para la segunda afirmación, se debe fundamentar por qué un arco visto como la conectividad entre un par de nodos, por ejemplo $(a,b)$ debe definirse aritméticamente como la media entre sus mediciones extremas e.g. $T_{i,j+1}$ y $T_{i+1,j+1}$ Si analizamos al arco como el camino unidimensional continuo de longitud $L$ recorrido por la luz su espesor afecta a toda la propagación por el arco equivale al promedio de la función del grosor para ese tramo curvo contínuo $s$ esto se puede modelar integralmente así:
+    \[ \langle T \rangle = \frac{1}{L} \int_{0}^{L} T(s) \, ds \]
+    Ahora través del teorema del valior medio, se establece que para esta función continua en un intervalo cerrado existirá siempre un punto intermedio $c \in (0, L)$ tal que la función evaluada en él devuelva exactamente nuestro promedio analizado: $T(c) = \langle T \rangle$.
+    
+    Puesto que se define una red matricial para este problema y los pasos diminutos $L$ relativos al tamaño macroscópico de la película y sobre un sistema cuya evolución fluida no presenta discontinuidades abruptas, resulta válido ensayar una aproximación lineal de primer orden para los gradientes en $T(s)$. 
+    
+    Ahora, el área bajo la curva se conforma por un trapezoide con bases correspondientes a los puntos de muestreo adyacentes. Explotando las propiedades geométricas de este, el TVM recae en establecer a dicho punto $c$ en el centro de masa de la función, el cual coincide obligatoriamente de forma exacta con la media aritmética de ambos extremos del tramo:
+    \[ \langle T \rangle \approx \frac{T_{inicio} + T_{fin}}{2} \]
+    
+    Por lo tanto es válido establecer el peso de un enlace como el promedio simple de sus enlaces adyacentes.
+\end{proof}
+
+El punto es que tengamos una red suficientemente densa en sus nodos de referencias o boyas, como para tener una información suficientemente congruente a la realidad del fenómeno que se observa.
 
 
 Finalmente se analizarán las siguientes propiedades:
@@ -76,5 +97,7 @@ Finalmente se analizarán las siguientes propiedades:
     \item Robustez del flujo ante cambios en la varianza de la densidad del medio
     \item Identificación de caminos críticos o puentes en la red de luz
 \end{itemize}
+
+
 
 

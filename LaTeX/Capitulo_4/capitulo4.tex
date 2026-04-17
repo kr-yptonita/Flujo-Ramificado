@@ -13,3 +13,19 @@ En este caso la implementación más interesante es sobre el caso del oleaje en 
     \caption{Epicentro del sismo}
     \label{Epicentro}
 \end{figure}
+
+\section{Contexto Histórico y Evolución del Problema}
+
+El estudio de la propagación de ondas en el océano ha estado dominado históricamente por modelos de difracción y refracción lineal. Durante décadas, se asumió que las variaciones en la intensidad del oleaje a grandes distancias se debían principalmente a la disipación geométrica, sin embargo se encontraron anomalías donde zonas donde la energía se concentraba de forma inesperada, creando ``ramas'' de alta amplitud que desafiaban las predicciones estocásticas simples \cite{degueldre2016random}.
+
+Este fenómeno fue observado inicialmente en sistemas de electrones y microondas \cite{heller2023}, pero su transposición a la oceanografía es reciente. Históricamente, la dificultad residía en la falta de mapas batimétricos de alta resolución y en la capacidad de cómputo para tratar el océano como un medio refractivo aleatorio.
+
+
+\section{El Sismo de la Costa de Japón y el Desafío de los Datos}
+
+El evento sísmico ocurrido en la costa de Tohoku \ref{Epicentro} representa uno de los escenarios de datos más ricos pero complejos de la historia reciente. A diferencia de los experimentos controlados en laboratorio como el modelo de la burbuja, este caso presenta variables de gran escala como lo son la heterogeneidad del medio, la escalabilidad de la red y las limitaciones de los modelos clásicos, que es justo donde usaré la prespectiva de grafos para poder usar los datos existentes, para crear la grafica con subnodos para representar el movimiento ya que a diferencia de la burbuja aqui el recorrido no es completo a lo largo de cada iteración si no a pasos cambiantes \cite{hantzis2019machine, garnier2025stochastic}. Esto pone muestra que el fondo marino no solo dispersa la energía, sino que actúa como una lente compleja que enfoca el oleaje en canales específicos \cite{lu2023refocusing}.
+
+
+\section{Justificación del Modelo de Transición}
+
+\textit{Nota de investigación: Lo que necesito es primero consolidar el modelo en el experimento de la burbuja para asegurar que la topología del grafo sea capaz de filtrar el ruido antes de aplicarlo a la batimetría del Pacífico, donde el error de medición y la escala temporal añaden capas de complejidad adicional.}

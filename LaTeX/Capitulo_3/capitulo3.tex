@@ -18,7 +18,7 @@ No se busca que los datos que se estudien sean de una burbuja común sino de un 
 Principalmente los datos que se buscan obtener son una matriz de colores relacionada a la imagen de la burbuja. A este fenómeno le conocemos como interferencia de película delgada.
 
 
-Volviendo a la imagen \ref{Burbuja_ejemplo} el cambio de color observado se debe principalmente a variaciones en el espesor de la película, más que a cambios en la densidad en sí. Sin embargo, la densidad del medio se relaciona de manera directa con el índice de refracción.
+Volviendo a la imagen \ref{Burbuja_ejemplo} el cambio de color observado se debe principalmente a variaciones en el espesor de la película, más que a cambios en la densidad en sí. Sin embargo, la densidad del medio se relaciona de manera directa con el índice de refracción \cite{lorentz1906theory}.
 
 La ecuación que relaciona el color visible con el espesor y las propiedades del medio es la condición para la interferencia constructiva:
 
@@ -90,6 +90,70 @@ Así podemos definir los arcos, los cuales quedarían sin dirección entre cada 
 \end{proof}
 
 El punto es que tengamos una red suficientemente densa en sus nodos de referencias o boyas, como para tener una información suficientemente congruente a la realidad del fenómeno que se observa.
+
+\section{Algoritmo Computacional para el Trazado de Luz}
+
+Para simular la propagación de la luz a través de la red descrita anteriormente, es necesario definir un algoritmo que recupere y explore las posibles trayectorias calculadas con las restricciones dadas. 
+
+\subsection{Fundamento Físico y Matemático}
+En el modelo de red reticular sobre la película de jabón, cada nodo actúa como un punto de evaluación espacial, y los pesos de las aristas determinan el costo óptico dictado por las variaciones del grosor continuo $T$ e índice de refracción. Así, el trayecto de propagación principal puede aproximarse encontrando el camino de costo mínimo desde uno o múltiples nodos fuente hacia el resto del entramado.
+
+Dado que todos los valores de grosor extraidos y asignados a los arcos son rigurosamente positivos y calculables según las propiedades ópticas demostradas previamente, se usará el Algoritmo de Dijkstra para dar solución en nuestro grafo. No obstante, para corresponderse con la física del problema y respetar la condición de imposibilidad de retrorreflexión local directa así el código convencional se adapta: en la etapa donde cada vértice explora a sus vecinos adyacentes, el flujo excluye intencionalmente examinar en retroceso hacia el mismo nodo del que acaba de derivarse
+
+\subsection{Pseudocódigo Transversal}
+
+\begin{algorithm}[H]
+\caption{Cálculo computacional de trayectorias en flujo ramificado}
+\begin{algorithmic}[1]
+\Require Grafo $G = (V, E)$, matriz de nodos y sus aristas. Función de peso $w(u,v) > 0$ derivada del grosor visual del jabón. Conjunto fuente de luz $S$. Distancias iniciales estructuradas al infinito.
+\Ensure Rutas continuas óptimas para los rayos virtuales simulados con matrices de distancias y predecesores para reconstruir toda la red del medio.
+
+\State $dist[v] \gets \infty$ para todo $v \in V$
+\State $dist[s] \gets 0$ para todo $s \in S$
+\State $prev[v] \gets$ NULO para todo $v \in V$ 
+\State Insertar todos los nodos $V$ en una Cola de Prioridad $CP$ usando $dist$
+
+\While{$CP$ no esté vacía}
+    \State $u \gets$ extraer nodo en $CP$ con el valor mínimo actual en $dist[u]$
+    \State RemoveMOS a $u$ de $CP$
+    
+    \If{$dist[u] == \infty$}
+        \State \textsc{break} \Comment{Los sub-grafos remanentes ya no logran ser iluminados}
+    \EndIf
+
+    \For{cada nodo $v$ colindante a $u$ (vecindad máxima 8-adyacente)}
+        \If{$v == prev[u]$}
+            \State \textsc{continue} \Comment{Restricción física prohibitiva de retrorreflexión contigua}
+        \EndIf
+        
+        \State $costo\_cruzado \gets w(u, v)$ \Comment{Adscrito gracias al Teorema del Valor Medio}
+        \State $paso\_acumulado \gets dist[u] + costo\_cruzado$
+        
+        \If{$paso\_acumulado < dist[v]$}
+            \State $dist[v] \gets paso\_acumulado$
+            \State $prev[v] \gets u$ \Comment{Conservación fiel de la direccionalidad del rayo}
+            \State Actualizar y cambiar la prioridad de $v$ en $CP$
+        \EndIf
+    \EndFor
+\EndWhile
+\State \Return Relevamiento paramétrico de árboles a lo largo de $prev[v]$ \Comment{Bifurcaciones listadas}
+\end{algorithmic}
+\label{alg:SimulacionFlujo}
+\end{algorithm}
+
+\subsection{Contabilidad de Complejidad Espacial y Computacional}
+
+Las viabilidad del simuladores esta drasticamente condicionadas por las eficiencia de las implementaciónes. Al lidiar con imajenes densa grabadas para el laboratorio, cada fotograma procesado podrian tener dimensiónes desde 4 asta 8 megapixeles es decir entre 4 y 8 millones de nodo $V$.
+
+\subsubsection{Tiempo Computacional:}
+Si se ejecuta construyendo la cola de prioridad $CP$ por medio de un montículo binario el tiempo invertido en la extracción del vértice mínimo es del orden de $O(\log N)$. Y la rebaja secuencial de la distancia de los vínculos incidentes añade de igual forma ciclos del orden $O(\log N)$, siendo siempre $N = |V|$ el total de vértices instanciados, y $E = |E|$ el umbral absoluto de aristas o arcos conformables.
+A lo extenso de la iteración principal cada nodo se procesa unívocamente una vez y todo arco vecinal afín es calibrado, llevando a un registro máximo acotado como:
+\[\text{Complejidad} = O((N + E) \log N) \]
+Recalcando las asunciones establecidas por la topología de la burbuja, el entramado asigna para todo píxel u holgura interna una conectividad delimitada de $8$ conductos por esquina. Esto garantiza algebraicamente que la cantidad máxima de fronteras evaluables será proporcionalmente un factor constante del número de puntos nodales evaluados $(E \approx 8N)$, con lo cual reducimos el margen asintótico en su cota superior, dando un resultado temporal de $O(N \log N)$. Este logro nos afirma que el algoritmo es escalable y manejable en un margen muy favorable dado el enorme grado de escala del proyecto, posibilitando analizar múltiples cuadros de video para medir los cambios de trayectoria con el tiempo. El uso, de ser menester, de estructuras avanzadas como el Montículo de Fibonacci reduciría la asintótica hasta teóricamente $O(E + N \log N)$, mejorando aún en fracciones la carga principal.
+
+\subsubsection{Complejidad de Espacio:}
+La resolución analítica exige conservar copias inmersas del entramado posicionado; para el dimensionamiento del arreglo se definen tensores bidimensionales proporcionales a lo evaluable; es necesario guardar un valor de rastreo temporal (`dist`) en punto flotante por pixel, y registrar su ruta de derivación (`prev`) en una cuadrícula simétrica paralela. Conociendo que el grafo se representa en su forma matricial abstracta (o en variables locales alocadas como mapa), la densidad en la RAM subyace bajo una estricta limitación lineal correlacionada y regida intrínsecamente del factor nodular. Entonces la contabilidad del almacenamiento dicta que la complejidad en la huella de memoria sea de
+\[ O(N) \]
 
 
 Finalmente se analizarán las siguientes propiedades:

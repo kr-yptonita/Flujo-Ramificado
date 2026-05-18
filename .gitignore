@@ -12,4 +12,5 @@
 compile.sh
 
 .vscode/
-Frames/
+*.npy
+frame*.png

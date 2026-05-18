@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import importlib
 import time
 import warnings
+import concurrent.futures
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import shortest_path
 
@@ -165,6 +166,59 @@ def compilar_video(carpeta_imagenes, salida_video, fps=24):
     out.release()
     print("Video compilado exitosamente.")
 
+def procesar_frame(args):
+    i, archivo_npy, total_frames, carpeta_trayectorias = args
+    print(f"\nProcesando Frame {i+1}/{total_frames}: {os.path.basename(archivo_npy)}")
+    
+    T = np.load(archivo_npy)
+    # USAR EL NUEVO TRAZADOR ESTOCÁSTICO
+    trazador = TrazadorFotonesEstocastico(T, prob_mantener_carril=0.85, costo_penalizacion=1000.0)
+    
+    y_ini = 0 # Borde superior
+    x_center = T.shape[1] // 2
+    
+    # Haz de 4 fotones
+    rutas_haz = []
+    start_trazado = time.time()
+    
+    def trazar_foton(p):
+        x_ini = x_center + p * 10
+        print(f"  [Frame {i+1}] Trazando fotón {p+1} (origen x={x_ini}, y={y_ini})...")
+        return trazador.trazar_camino(x_ini, y_ini)
+        
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        resultados = list(executor.map(trazar_foton, range(4)))
+        
+    for ruta in resultados:
+        if ruta:
+            rutas_haz.append(ruta)
+            
+    end_trazado = time.time()
+    print(f"  [Frame {i+1}] Trazado completado en {end_trazado - start_trazado:.2f} s")
+    
+    # Guardar imagen con trayectorias
+    fig = plt.figure(figsize=(12, 8))
+    vmax = np.percentile(T, 99)
+    vmin = np.percentile(T, 1)
+    plt.imshow(T, cmap='inferno', vmin=vmin, vmax=vmax, extent=[0, T.shape[1], T.shape[0], 0])
+    
+    for ruta in rutas_haz:
+        rx = [p[0] for p in ruta]
+        ry = [p[1] for p in ruta]
+        plt.plot(rx, ry, color='#00FF00', linewidth=1) # 1 píxel de grosor
+        
+    plt.colorbar(label='Espesor (nm)')
+    plt.title(f'Trayectoria Estocástica del Fotón - Frame {i+1:04d}')
+    plt.axis('off')
+    
+    nombre_salida = f"frame_{i+1:04d}.png"
+    ruta_salida = os.path.join(carpeta_trayectorias, nombre_salida)
+    
+    plt.savefig(ruta_salida, dpi=150, bbox_inches='tight', pad_inches=0)
+    plt.close(fig) # Liberar memoria RAM crucial
+    print(f"  [Frame {i+1}] Imagen guardada: {nombre_salida}")
+    return ruta_salida
+
 def main():
     carpeta_frames = os.path.join(directorio_base, "Frames")
     carpeta_salida_matrices = os.path.join(directorio_base, "Matrices_Espesor")
@@ -194,53 +248,16 @@ def main():
         print("No se generaron matrices.")
         return
         
-    print(f"Iniciando trazado de fotones estocástico para {len(rutas_npy)} frames...")
+    print(f"Iniciando trazado de fotones estocástico para {len(rutas_npy)} frames usando Multiprocesamiento...")
     
-    for i, archivo_npy in enumerate(rutas_npy):
-        print(f"\nProcesando Frame {i+1}/{len(rutas_npy)}: {os.path.basename(archivo_npy)}")
-        
-        T = np.load(archivo_npy)
-        # USAR EL NUEVO TRAZADOR ESTOCÁSTICO
-        trazador = TrazadorFotonesEstocastico(T, prob_mantener_carril=0.85, costo_penalizacion=1000.0)
-        
-        y_ini = 0 # Borde superior
-        x_center = T.shape[1] // 2
-        
-        # Haz de 4 fotones
-        rutas_haz = []
-        start_trazado = time.time()
-        
-        for p in range(4):
-            x_ini = x_center + p * 10
-            print(f"  Trazando fotón {p+1} (origen x={x_ini}, y={y_ini})...")
-            ruta = trazador.trazar_camino(x_ini, y_ini)
-            if ruta:
-                rutas_haz.append(ruta)
-                
-        end_trazado = time.time()
-        print(f"  Trazado completado en {end_trazado - start_trazado:.2f} s")
-        
-        # Guardar imagen con trayectorias
-        fig = plt.figure(figsize=(12, 8))
-        vmax = np.percentile(T, 99)
-        vmin = np.percentile(T, 1)
-        plt.imshow(T, cmap='inferno', vmin=vmin, vmax=vmax, extent=[0, T.shape[1], T.shape[0], 0])
-        
-        for ruta in rutas_haz:
-            rx = [p[0] for p in ruta]
-            ry = [p[1] for p in ruta]
-            plt.plot(rx, ry, color='#00FF00', linewidth=1) # 1 píxel de grosor
-            
-        plt.colorbar(label='Espesor (nm)')
-        plt.title(f'Trayectoria Estocástica del Fotón - Frame {i+1:04d}')
-        plt.axis('off')
-        
-        nombre_salida = f"frame_{i+1:04d}.png"
-        ruta_salida = os.path.join(carpeta_trayectorias, nombre_salida)
-        
-        plt.savefig(ruta_salida, dpi=150, bbox_inches='tight', pad_inches=0)
-        plt.close(fig) # Liberar memoria RAM crucial
-        print(f"  Imagen guardada: {nombre_salida}")
+    args_list = [(i, archivo_npy, len(rutas_npy), carpeta_trayectorias) for i, archivo_npy in enumerate(rutas_npy)]
+    
+    # Limitar max_workers a os.cpu_count() o un número sensato para no saturar la memoria RAM
+    import multiprocessing
+    max_workers = min(multiprocessing.cpu_count(), 8) if multiprocessing.cpu_count() else 4
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        list(executor.map(procesar_frame, args_list))
         
     print("\nIniciando compilación de video...")
     compilar_video(carpeta_trayectorias, video_salida, fps=24)

@@ -62,7 +62,7 @@ def crear_lut_espesores(t_min=10, t_max=1500, paso=1, n=1.42, theta_i=30):
     lut_bgr = np.clip(lut_bgr_gamma * 255.0, 0, 255).astype(np.uint8)
     return espesores, lut_bgr
 
-def procesar_fotogramas(carpeta_frames, carpeta_salida, lut_espesores, lut_bgr, prueba=False):
+def procesar_fotogramas(carpeta_frames, carpeta_salida, lut_espesores, lut_bgr, limite_frames=None):
     if not os.path.exists(carpeta_salida):
         os.makedirs(carpeta_salida)
         
@@ -71,17 +71,18 @@ def procesar_fotogramas(carpeta_frames, carpeta_salida, lut_espesores, lut_bgr, 
     
     if not archivos:
         print("No se encontraron fotogramas en", carpeta_frames)
-        return
+        return []
         
     print(f"Se encontraron {len(archivos)} fotogramas. Construyendo árbol KD...")
     tree = cKDTree(lut_bgr)
     
-    if prueba:
-        archivos = archivos[:1] # Solo el primer fotograma
-        print(f"Modo PRUEBA: Procesando solo {archivos[0]}")
+    if limite_frames is not None:
+        archivos = archivos[:limite_frames]
+        print(f"Modo LIMITADO: Procesando solo {len(archivos)} fotogramas")
     else:
         print(f"Procesando {len(archivos)} fotogramas...")
         
+    archivos_salida = []
     for archivo in archivos:
         inicio = time.time()
         nombre = os.path.basename(archivo)
@@ -93,7 +94,6 @@ def procesar_fotogramas(carpeta_frames, carpeta_salida, lut_espesores, lut_bgr, 
             continue
             
         # 2. Promediar subcuadrículas de 2x2 píxeles
-        # INTER_AREA es matemáticamente equivalente al promedio de bloques (box filter)
         h, w = img.shape[:2]
         nuevo_w = w // 2
         nuevo_h = h // 2
@@ -110,9 +110,12 @@ def procesar_fotogramas(carpeta_frames, carpeta_salida, lut_espesores, lut_bgr, 
         nombre_salida = nombre.replace('.png', '.npy')
         ruta_salida = os.path.join(carpeta_salida, nombre_salida)
         np.save(ruta_salida, matriz_espesores)
+        archivos_salida.append(ruta_salida)
         
         fin = time.time()
         print(f"Procesado {nombre} -> {nuevo_w}x{nuevo_h} en {fin - inicio:.2f} s")
+        
+    return archivos_salida
 
 if __name__ == '__main__':
     print("Generando Tabla de Colores (LUT)...")

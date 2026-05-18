@@ -91,6 +91,21 @@ Así podemos definir los arcos, los cuales quedarían sin dirección entre cada 
 
 El punto es que tengamos una red suficientemente densa en sus nodos de referencias o boyas, como para tener una información suficientemente congruente a la realidad del fenómeno que se observa.
 
+\subsection{Procesamiento de Imágenes y Generación de Matrices de Espesor}
+
+Para materializar el sistema de boyaje descrito y conseguir nuestros pesos para las aristas, implementé un algoritmo que toma los fotogramas del video que grabamos. El primer paso de este código es crear una tabla de búsqueda (LUT, por sus siglas en inglés) basándose fielmente en la física de interferencia de película delgada que revisamos. Calculamos el color esperado para espesores que van desde los $10$ hasta los $1500$ nm, esto lo configuramos con un índice de refracción de $1.42$ para la mezcla de jabón, y considerando un ángulo de incidencia de la luz artificial de unos $30^\circ$. Para que los colores calculados coincidan con lo que realmente captó el sensor de la cámara, utilicé las funciones de correspondencia de color CIE 1931.
+
+Posterior a construir esta paleta de colores teórica, la estructuramos en un árbol KD (k-dimensional tree) para hacer las búsquedas computacionalmente rápidas. Con cada fotograma del video, lo primero que se hace es reducir un poco la resolución promediando subcuadrículas de $2 \times 2$ píxeles, esto nos ayuda matemáticamente como un filtro para bajar el ruido de la imagen. Luego se compara el color de cada pixel en el árbol KD para encontrar el color teórico más similar y así se le asigna el espesor correspondiente.
+
+Con esto por fin obtenemos las matrices de espesores que queríamos, guardadas como arreglos de números. Para darnos una idea visual de que la información fuera correcta y congruente, también generé una gráfica de mapa de calor (heatmap) para un fotograma analizado, véase la figura \ref{fig:heatmap_espesor}. Allí podemos apreciar muy bien cómo cambian los espesores de la película de jabón, e incluso omitimos el $1\%$ de los valores más extremos por si había algún pixel muerto, dándonos una imagen muy limpia de las densidades por donde fluirá la luz en nuestro siguiente paso.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{heatmap.png}
+    \caption{Mapa de calor (heatmap) representando el espesor de la película de jabón extraído computacionalmente de un fotograma.}
+    \label{fig:heatmap_espesor}
+\end{figure}
+
 \section{Algoritmo Computacional para el Trazado de Luz}
 
 Para simular la propagación de la luz a través de la red descrita anteriormente, es necesario definir un algoritmo que recupere y explore las posibles trayectorias calculadas con las restricciones dadas. 
@@ -152,9 +167,16 @@ A lo extenso de la iteración principal cada nodo se procesa unívocamente una v
 Recalcando las asunciones establecidas por la topología de la burbuja, el entramado asigna para todo píxel u holgura interna una conectividad delimitada de $8$ conductos por esquina. Esto garantiza algebraicamente que la cantidad máxima de fronteras evaluables será proporcionalmente un factor constante del número de puntos nodales evaluados $(E \approx 8N)$, con lo cual reducimos el margen asintótico en su cota superior, dando un resultado temporal de $O(N \log N)$. Este logro nos afirma que el algoritmo es escalable y manejable en un margen muy favorable dado el enorme grado de escala del proyecto, posibilitando analizar múltiples cuadros de video para medir los cambios de trayectoria con el tiempo. El uso, de ser menester, de estructuras avanzadas como el Montículo de Fibonacci reduciría la asintótica hasta teóricamente $O(E + N \log N)$, mejorando aún en fracciones la carga principal.
 
 \subsubsection{Complejidad de Espacio:}
-La resolución analítica exige conservar copias inmersas del entramado posicionado; para el dimensionamiento del arreglo se definen tensores bidimensionales proporcionales a lo evaluable; es necesario guardar un valor de rastreo temporal (`dist`) en punto flotante por pixel, y registrar su ruta de derivación (`prev`) en una cuadrícula simétrica paralela. Conociendo que el grafo se representa en su forma matricial abstracta (o en variables locales alocadas como mapa), la densidad en la RAM subyace bajo una estricta limitación lineal correlacionada y regida intrínsecamente del factor nodular. Entonces la contabilidad del almacenamiento dicta que la complejidad en la huella de memoria sea de
+La resolución analítica exige conservar copias inmersas del entramado posicionado; para el dimensionamiento del arreglo se definen tensores tridimensionales proporcionales a lo evaluable. Específicamente, para dotar al algoritmo de \textit{memoria direccional} que restrinja el cono de avance (frente progresivo) y determine la inercia del haz en caso de empates, el estado de exploración se define como la tupla $(y, x, \vec{v})$. Por consiguiente, es necesario guardar un valor de rastreo temporal (`dist`) en punto flotante por cada estado posicional y direccional, y registrar su ruta de derivación (`prev`) en una cuadrícula simétrica de igual dimensión. Conociendo que el grafo se representa en su forma matricial abstracta extendida (donde el número de direcciones es una constante discreta $d=8$), la densidad en la RAM subyace bajo una estricta limitación lineal correlacionada y regida intrínsecamente del factor nodular. Entonces la contabilidad del almacenamiento dicta que la complejidad en la huella de memoria sea de
 \[ O(N) \]
 
+\subsection{Dinámica de Simulación por Fotogramas}
+
+Para llevar a cabo la experimentación, es importante definir las dimensiones y las reglas de movimiento bajo las cuales operará nuestro algoritmo. Como resultado del procesamiento de los fotogramas descrito anteriormente, cada matriz de espesores extraída y asociada a la imagen consta de dimensiones $A_{541, 961}$ (541 renglones por 961 columnas). 
+
+La simulación del haz de luz se inicia inyectando la señal en cualquier nodo perteneciente a la primera columna, es decir, en un nodo de la forma $a_{m,1}$. Al incidir en el medio, se define una dirección inicial para el haz según un ángulo de entrada determinado. A partir de este punto, y para cada frame, se realiza una simulación iterativa del camino del haz de fotones.
+
+En su trayecto, los fotones cambiarán de vecino siguiendo siempre el camino más corto posible evaluado por la red. Como ya se demostró matemáticamente en las secciones previas, recordaremos que en este sistema la luz no puede reflejarse (no hay retrorreflexión), por lo que el avance siempre mantiene un frente progresivo. Adicionalmente, se presenta una consideración física fundamental para el modelo: en caso de que el paso más corto se encuentre en una región con el mismo espesor (múltiples opciones óptimas o un medio homogéneo), el haz de fotones no se desviará al azar, sino que seguirá rigurosamente la misma dirección que tenía en el paso anterior, conservando así su momento.
 
 Finalmente se analizarán las siguientes propiedades:
 \begin{itemize}
@@ -162,6 +184,16 @@ Finalmente se analizarán las siguientes propiedades:
     \item Robustez del flujo ante cambios en la varianza de la densidad del medio
     \item Identificación de caminos críticos o puentes en la red de luz
 \end{itemize}
+
+\subsubsection{Notas sobre Tiempo de Cómputo y Optimización}
+La implementación algorítmica en serie mediante estructuras dinámicas convencionales (diccionarios de Python) arroja un tiempo de cálculo aproximado de $70$ segundos por fotón. Trazar un haz compuesto por $4$ fotones (simulando 4 píxeles de grosor) para la totalidad de los $847$ fotogramas extraídos exigiría más de $65$ horas de cómputo ininterrumpido. Para viabilizar la experimentación, es esencial implementar una optimización estructural de memoria: el reemplazo de las estructuras de rastreo por matrices indexadas tridimensionales (`NumPy`) permite un acceso directo a memoria contigua, mitigando los cuellos de botella del algoritmo. Asimismo, es importante señalar que, al resolver estados independientes para múltiples rayos en cientos de imágenes paralelas, este modelo algorítmico es inherentemente masivo y altamente acelerable bajo cómputo de GPU.
+
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=\textwidth]{Capitulo_3/heatmap_foton.png}
+    \caption{Trayectoria óptima del fotón.}
+    \label{fig:trayectoria_foton}
+\end{figure}
 
 
 

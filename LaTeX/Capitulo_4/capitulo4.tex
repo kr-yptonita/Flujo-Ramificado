@@ -1,10 +1,6 @@
 \chapter{Aplicaciones y Análisis de Datos}
 En esta sección se explorará la aplicación de los grafos de red estructurados previamente para analizar datos experimentales de olas oceánicas, buscando paralelismos en el comportamiento del flujo ramificado en diferentes medios físicos.
 
-\section*{}
-\textit{Aqui lo que busco es primero generar un modelo confiable con la burbuja y una red estable y con bastantes datos antes de entrar en este de aqui ya que aquí tenemos una nueva problematica}
-
-
 En este caso la implementación más interesante es sobre el caso del oleaje en el oceano pacifico en el cual  ocurrió un temblor en la costa de Japón  veasé \ref{Epicentro} 
 
 \begin{figure}
@@ -26,6 +22,46 @@ Este fenómeno fue observado inicialmente en sistemas de electrones y microondas
 El evento sísmico ocurrido en la costa de Tohoku \ref{Epicentro} representa uno de los escenarios de datos más ricos pero complejos de la historia reciente. A diferencia de los experimentos controlados en laboratorio como el modelo de la burbuja, este caso presenta variables de gran escala como lo son la heterogeneidad del medio, la escalabilidad de la red y las limitaciones de los modelos clásicos, que es justo donde usaré la prespectiva de grafos para poder usar los datos existentes, para crear la grafica con subnodos para representar el movimiento ya que a diferencia de la burbuja aqui el recorrido no es completo a lo largo de cada iteración si no a pasos cambiantes \cite{hantzis2019machine, garnier2025stochastic}. Esto pone muestra que el fondo marino no solo dispersa la energía, sino que actúa como una lente compleja que enfoca el oleaje en canales específicos \cite{lu2023refocusing}.
 
 
-\section{Justificación del Modelo de Transición}
+\section{Transición hacia el Modelo de Oleaje Oceánico}
 
-\textit{Nota de investigación: Lo que necesito es primero consolidar el modelo en el experimento de la burbuja para asegurar que la topología del grafo sea capaz de filtrar el ruido antes de aplicarlo a lo conocido del fondo oceanico del Pacífico, donde el error de medición y la escala temporal añaden capas de complejidad adicional.}
+A diferencia de la implementación que realicé para la burbuja de jabón, donde el modelo podía permitirse evaluar el recorrido completo a una velocidad asintóticamente instantánea debido a la escala macroscópica de la luz sobre un objeto minúsculo, el océano requiere un enfoque drásticamente distinto. Para entender cómo funcionaría esta transición sin llegar a programarlo exhaustivamente en este escrito, primero debo establecer que la matriz oceánica operará con una cantidad de nodos notablemente menor, espaciados para representar distancias de cientos de kilómetros. En este medio colosal, el tiempo de propagación de la onda se vuelve un factor absoluto, por lo que el frente de onda ya no puede procesarse como si avanzara infinitamente rápido como el caso anterior, aqui el oleaje es dictado paramétricamente por la velocidad del sonido en el agua, aproximadamente $1500$ m/s, y actuará como el límite de fase físico para cada iteración de la red.
+
+Otro cambio estructural crítico en mi concepción del modelo radica en los obstáculos. En la solución jabonosa asumía un fluido continuo y uniforme sin imperfecciones abruptas extremas que curiosamente se soluciona tomando a todos los vecinos en vez de solo los que se encuentran en el frente de onda, lo cual me permitía prohibir matemáticamente que la luz retrocediera sin embargo, en el fondo del Océano Pacífico nos topamos con islas escarpadas y cordilleras submarinas que actúan como barreras topográficas, esto hace que cuando la onda impacte contra estos nodos restrictivos, ocurrirán dos fenómenos programáticos primero así la energía del oleaje se atenuará para el siguiente paso debido a la obvia disipación por fricción y colisión y segundo, obligatoriamente se generará un rayo de onda reflejado, y esto es escencial porque permite que, por primera vez en la frafica, el flujo rebote y viaje activamente en dirección opuesta al epicentro.
+
+Como con esta perspectiva se puede responder a lo que desató la catástrofe que presenciamos durante la situación del temblor en la costa de Japón donde el concepto de interferencia constructiva masiva se vuelve economico en la simulación en comparación con otro tipo de simulaciones de alta precisión, ya que al ser un algoritmo de facil aceleración se puede permitir evaluar todos los escenarios posibles en muy poco tiempo de manera paralela y lograr dar alertas oportunas para la evacuación de las costas. Si durante el progreso de la simulación dos rayos o ramificaciones del flujo de agua convergen simultáneamente en un mismo nodo geográfico, el algoritmo dictaminará una ``alimentación'' mutua sumando de golpe sus intensidades. Esta retroalimentación de energías concentra el poder destructivo de forma impredecible en corredores específicos del océano y explica teóricamente cómo se lograron formar esas anomalías de oleaje o tsunamis amplificados lejos de la falla tectónica.
+
+\subsection{Pseudocódigo del Grafo Oceánico Adaptado}
+
+Esto a pesar de lo que parece, al tener ya una logica para el modelo ya robusta es necesario solo realizar un par de adecuaciones para la aplicación al modelo de las ondas sísmicas de gran escala en el océano. 
+\begin{algorithm}[H]
+\caption{Propagación de onda oceánica con reflexiones e interferencias}
+\begin{algorithmic}[1]
+\Require Grafo oceánico con nodos barrera (islas/cordilleras). Intensidad inicial $I_0$. Velocidad propagación $v = 1500 \text{ m/s}$. Factor atenuador de choque $\alpha < 1$.
+\Ensure Mapa de dispersión espacio-temporal de energía sísmica.
+\State Inicializar matriz de intensidades máximas $I_{\text{max}}[v] \gets 0$ para todos los nodos
+\State Encolar nodo epicentro inicial con intensidad $I_0$
+
+\While{Cola de procesamiento no esté vacía}
+    \State Extraer frente de onda actual: $(u, \text{intensidad\_actual})$
+    
+    \If{Múltiples ondas coinciden espacial y temporalmente en nodo $u$}
+        \State $\text{intensidad\_actual} \gets \sum \text{energías incidentes}$ \Comment{Alimentación (Interferencia Constructiva)}
+    \EndIf
+    
+    \State $I_{\text{max}}[u] \gets \max(I_{\text{max}}[u], \text{intensidad\_actual})$ \Comment{Registro del evento crítico}
+
+    \For{cada nodo $w$ adyacente a $u$}
+        \If{nodo $w$ es BARRERA}
+            \State $\text{nueva\_int} \gets \text{intensidad\_actual} \times \alpha$ \Comment{Atenuación por impacto topográfico}
+            \State Encolar onda hacia nodo $u$ con $\text{nueva\_int}$ \Comment{Retrorreflexión permitida y generada}
+        \Else
+            \State Encolar onda hacia $w$ con intensidad decaída según propagación y fricción
+        \EndIf
+    \EndFor
+\EndWhile
+\end{algorithmic}
+\label{alg:SimulacionOceano}
+\end{algorithm}
+
+
+Ahora esta implementación no es posible de realizar dado que no existe el acceso facil a los datos de boyas, datos topograficos recientes, sin embargo, para eso es que se realizó el experimento con la burbuja de jabón para poder obtener la lógica de programación adecuada y saber que este modelo es viable de implementar siempre y cuando se consigan los datos correspondientes.

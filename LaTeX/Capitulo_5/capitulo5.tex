@@ -1,4 +1,19 @@
-\chapter{Resultados Esperados}
-Se busca demostrar que la estructura del flujo ramificado no es puramente caótica, sino que posee una topología de red subyacente que puede ser cuantificada. Se espera encontrar una relación funcional entre la longitud de correlación del medio estocástico y la eficiencia de transporte de la red resultante.
+\chapter{Resultados, Interpretación y Conclusiones}
 
+\section{Resultados del Modelado en Películas de Jabón}
+Se logró demostrar que la estructura del flujo ramificado no es puramente caótica, sino que posee una topología de red subyacente que puede ser cuantificada. A partir del procesamiento estocástico de la matriz de espesores de la película de jabón, se observó que los fotones trazados no viaja en línea recta ni de forma errática y que por el contrario la topografía del medio define la ruta.
 
+El algoritmo implementado validó que los ``valles'' de menor resistencia o índice de refracción en la matriz estocástica funcionan como las aristas principales de un grafo. Cuando el haz avanza a través del medio, este se bifurca siguiendo estos canales de menor costo recreando el comportamiento de ramificación que buscábamos simular sin perder su fidelidad matemática.
+
+\section{Análisis de Rendimiento Algorítmico}
+En términos de eficiencia computacional, la simulación mononúcleo requerida para procesar el árbol de decisión estocástico completo incluyendo el espacio completo del medio a evaluar toma alrededor de $70$ segundos por fotón. Sin embargo, al transicionar a un esquema de paralelismo por multiprocesamiento el tiempo se reduce de forma inversamente proporcional a la cantidad de núcleos de cómputo disponibles. Puesto que la decisión direccional del modelo se fundamenta principalmente en operaciones de comparación dentro de la matriz, esta metodología resulta ideal y altamente escalable para ejecuciones masivas en entornos de procesamiento gráfico matricial GPU/TPU, lo que posibilitaría simular la compleja topología de un océano o galaxia en una escala de tiempo minúscula a la de su ocurrencia real.
+
+\section{Interpretación de la Red Subyacente}
+Estos resultados afianzan de forma transversal la hipótesis original del proyecto de que las irregularidades de cualquier medio estocástico conforman una red de propagación predefinida ya sea la luz, el agua o cualquier entidad que se propague por un medio, esta sufre inevitablemente un proceso de enfoque y desenfoque lo que agrupando su energía mediante interferencias constructivas en corredores muy precisos genera los canales densos que visualizamos en nuestras simulaciones.
+
+\section{Conclusiones: Del Micromundo al Universo}
+El experimento inicial de la película jabonosa demostró satisfactoriamente a escala nanométrica, y cómo los gradientes de espesor actúan como lentes en una escala diametralmente superior y como se analiza a lo largo del documento (véase el Algoritmo \ref{alg:SimulacionOceano}), los escarpados canales y cordilleras submarinas del océano actúan de manera homóloga, encauzando y enfocando el oleaje sísmico de Japón. 
+
+Un dato fundamental para dimensionar la verdadera utilidad de este modelo radica en la ventana de oportunidad: la energía liberada por el sismo en Japón y su onda consecuente tardaron aproximadamente 2 horas y 36 minutos en alcanzar las costas de Colombia si aplicáramos nuestro algoritmo de red acelerado bajo un entorno de alto rendimiento la simulación de todos los frentes de interferencia constructiva masiva lograría completarse en una ínfima fracción de dicho tiempo, otorgando una capacidad vital para organizar evacuaciones oportunas.
+
+Pero, más allá de la Tierra, esta topología de red estructurada nos dota de un marco matemático para comprender la organización del universo mismo. A escala cósmica, los nodos y los pesos del medio de propagación son dictados por las masas gravitacionales de los astros. En el espacio, el campo gravitatorio y la presencia de lentes gravitacionales de los objetos masivos actúan tal y como lo hacen nuestros gradientes de grosor en la burbuja lo que termina desviando la materia y la luz a través del universo, por lo que podemos concluir que esta teoria no solo describe el recorrido de la materia o la luz en un medio no homogéneo sino que es fundamental para comprender la estructura de muchos fenómenos naturales.
